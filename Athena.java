@@ -1,6 +1,9 @@
 import java.net.*;
 import java.io.*;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileSystemView;
+
 import java.awt.event.*;
 import java.awt.*;
 import java.awt.image.*;
@@ -134,7 +137,7 @@ public class Athena {
         }
 
         catch (UnknownHostException e) {
-            System.out.println("Unknow Host Exception: " + e.getMessage());
+            System.out.println("Unknown Host Exception: " + e.getMessage());
         }
         catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
@@ -200,9 +203,32 @@ public class Athena {
     private void send(JFrame previousMenu) {
 
         JFrame sendFrame = new JFrame("Send");
+        sendFrame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+
+                device.setFullScreenWindow(previousMenu);
+                sendFrame.dispose();
+            }
+        });
+
+        JButton openImageButton = new JButton("Open");
+        openImageButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+                fileChooser.setAcceptAllFileFilterUsed(false);
+                fileChooser.setDialogTitle("Select a .png file");
+                FileNameExtensionFilter pngRestrict = new FileNameExtensionFilter("Only .png files", "png");
+            }
+        });
+
         sendFrame.setLayout(null);
         sendFrame.setResizable(false);
         device.setFullScreenWindow(sendFrame);
+
+
+
+        sendFrame.setVisible(true);
     }
 
     private void read(JFrame previousMenu) {
