@@ -11,47 +11,54 @@ public class Athena {
     private DataInputStream dis;
     private DataOutputStream dos;
     private Socket s;
+    private GraphicsDevice device;
+
+    private int midFrameX;
+    private int midFrameY;
 
     private int panelSideLength = 500;
 
-    public Athena() {
-
+    public Athena()  {
+    
         try {
             s = new Socket("localhost", 6666);
             dos = new DataOutputStream(s.getOutputStream());
             dis = new DataInputStream(s.getInputStream());
 
             JFrame clientFrame = new JFrame("Athena");
-            clientFrame.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
-                    try {
-                        dos.writeUTF("end");
-                        dos.flush();
-                        s.close();
-                        dis.close();
-                        dos.close();
-                    } catch (Exception event) {
-                    }
-                    System.exit(0);
+            WindowAdapter closeWindow = new WindowAdapter() {
+
+            public void windowClosing(WindowEvent e) {
+                try {
+                    dos.writeUTF("end");
+                    dos.flush();
+                    s.close();
+                    dis.close();
+                    dos.close();
                 }
-            });
-
+                catch (Exception event) {
+                }
+                System.exit(0);
+            }
+        };
+            clientFrame.addWindowListener(closeWindow);
+    
             GraphicsEnvironment graphics = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            GraphicsDevice device = graphics.getDefaultScreenDevice();
-
+            device = graphics.getDefaultScreenDevice();
+            
             // Steps required to display the frame and only the current frame
             clientFrame.setResizable(false);
             clientFrame.setLayout(null);
             device.setFullScreenWindow(clientFrame);
-
+    
             Dimension frameSize = clientFrame.getSize();
-
-            int midFrameX = (int) frameSize.getWidth() / 2;
-            int midFrameY = (int) frameSize.getHeight() / 2;
-
+    
+            midFrameX = (int) frameSize.getWidth() / 2;
+            midFrameY = (int) frameSize.getHeight() / 2;
+    
             JPanel inputPanel = new JPanel();
             inputPanel.setSize(panelSideLength, panelSideLength);
-
+    
             inputPanel.setLocation(midFrameX - (panelSideLength / 2), midFrameY - (panelSideLength / 2));
 
             JLabel usernameLabel = new JLabel("Username:");
@@ -80,14 +87,15 @@ public class Athena {
                         String logInResult = (String) dis.readUTF();
                         String[] detailsArray = logInResult.split(",");
                         if (detailsArray[1].equals("true")) {
-                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Message",
-                                    JOptionPane.INFORMATION_MESSAGE);
-                        } else {
-                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Error",
-                                    JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Message", JOptionPane.INFORMATION_MESSAGE);
+                            clientFrame.removeWindowListener(closeWindow);
+                            menu();
                         }
-                    } catch (IOException exception) {
-
+                        else {
+                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                    catch (IOException exception) {
                     }
                 }
             });
@@ -102,36 +110,105 @@ public class Athena {
                         String logInResult = (String) dis.readUTF();
                         String[] detailsArray = logInResult.split(",");
                         if (detailsArray[1].equals("true")) {
-                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Account Creation Message",
-                                    JOptionPane.INFORMATION_MESSAGE);
-                        } else {
-                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Account Creation Error",
-                                    JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Account Creation Message", JOptionPane.INFORMATION_MESSAGE);
+                            clientFrame.removeWindowListener(closeWindow);
+                            clientFrame.dispose();
+                            menu();
                         }
-                    } catch (IOException exception) {
+                        else {
+                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Account Creation Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                    catch (IOException exception) {
 
                     }
                 }
             });
-
+            
             inputPanel.add(logInButton);
             inputPanel.add(createAccountButton);
 
             clientFrame.add(inputPanel);
 
             clientFrame.setVisible(true);
-
-            sendImage(ImageIO.read(new File("test-result.png")));
-
         }
 
         catch (UnknownHostException e) {
             System.out.println("Unknow Host Exception: " + e.getMessage());
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
     }
-    
+
+    private void menu() {
+
+        JFrame menuFrame = new JFrame("Menu");
+        menuFrame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                try {
+                    dos.writeUTF("end");
+                    dos.flush();
+                    s.close();
+                    dis.close();
+                    dos.close();
+                }
+                catch (Exception event) {
+                }
+                System.exit(0);
+            }
+        }
+        );
+        menuFrame.setLayout(null);
+        menuFrame.setResizable(false);
+        device.setFullScreenWindow(menuFrame);
+
+        JButton sendButton = new JButton("Send Messages");
+        sendButton.setBounds(midFrameX - 175, midFrameY - 15, 150, 30);
+        sendButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                send(menuFrame);
+            }
+        });
+
+        JButton readButton = new JButton("Read Messages");
+        readButton.setBounds(midFrameX + 25, midFrameY - 15, 150, 30);
+        readButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                read(menuFrame);
+            }
+        });
+
+        JButton quitButton = new JButton("Quit");
+        quitButton.setBounds(midFrameX - 25, midFrameY + 30, 50, 20);
+        quitButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                menuFrame.dispose();
+            }
+        });
+
+        menuFrame.add(sendButton);
+        menuFrame.add(readButton);
+        menuFrame.add(quitButton);
+
+        menuFrame.setVisible(true);
+    }
+
+    private void send(JFrame previousMenu) {
+
+        JFrame sendFrame = new JFrame("Send");
+        sendFrame.setLayout(null);
+        sendFrame.setResizable(false);
+        device.setFullScreenWindow(sendFrame);
+    }
+
+    private void read(JFrame previousMenu) {
+
+    }
+
     private void sendImage(BufferedImage image) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, "png", baos);
