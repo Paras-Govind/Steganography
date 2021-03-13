@@ -8,15 +8,62 @@ import java.security.MessageDigest;
 public class Iris {
 
     private static final String DATABASE_NAME = "Users.db";
+    private static final String LOG_IN_FLAG = "0";
+    private static final String CREATE_NEW_USER_FLAG = "1";
+
     public static void main(String[] args) throws Exception {
 
         ServerSocket ss = new ServerSocket(6666);
         Socket s = ss.accept();
         DataInputStream dis=new DataInputStream(s.getInputStream());  
-        String  str = (String)dis.readUTF();  
-        
+        String logInDetails = (String)dis.readUTF();  
 
+        String[] detailsArray = logInDetails.split(",");
+
+        if (detailsArray.length != 3) {
+            System.out.println("Error with provided data");
+        }
+        else if (detailsArray[0].equals(LOG_IN_FLAG)) {
+            logIn(detailsArray[1], detailsArray[2]);
+        }
+        else if (detailsArray[0].equals(CREATE_NEW_USER_FLAG)) {
+            createUser(detailsArray[1], detailsArray[2]);
+        }
+        else {
+            System.out.println("There was an error with the provided data's structure.");
+        }
+        
+        
         ss.close();
+    }
+
+    private static void createUser(String username, String password) throws Exception {
+
+        Connection conn = DriverManager.getConnection("jdbc:sqlite:" + DATABASE_NAME);
+
+        PreparedStatement checkUserStatement = conn.prepareStatement("SELECT * FROM users WHERE username = ?");
+        checkUserStatement.setString(1, username);
+
+        boolean alreadyUsedUsername = false;
+
+        ResultSet registeredUsers = checkUserStatement.executeQuery();
+        while (registeredUsers.next()) {
+            alreadyUsedUsername = !alreadyUsedUsername;
+        }
+
+        if (alreadyUsedUsername) {
+            System.out.println("That username is already in use.");
+        }
+        else {
+            PreparedStatement addUserStatement = conn.prepareStatement("INSERT INTO users VALUES(?,?)");
+            addUserStatement.setString(1, username);
+            addUserStatement.setString(2, hashPass(password));
+            addUserStatement.executeUpdate();
+            System.out.println("Added to database.");
+            addUserStatement.close();
+        }
+        checkUserStatement.close();
+        conn.close();
     }
 
     private static void logIn(String username, String password) throws Exception {
@@ -50,8 +97,12 @@ public class Iris {
         else {
             System.out.println("Incorrect Password");
         }
+
+        userStatement.close();
+        conn.close();
     }
 
+    // Code taken from https://www.geeksforgeeks.org/sha-256-hash-in-java/
     private static String hashPass(String password) throws Exception {
 
         MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -64,4 +115,5 @@ public class Iris {
 
         return hexString.toString();
     }
+    // End of copied code
 }
