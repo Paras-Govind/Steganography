@@ -19,7 +19,7 @@ public class LoadImageApp extends Component {
 
     public LoadImageApp() {
         try {
-            img = ImageIO.read(new File("Adult Penguins.png"));
+            img = ImageIO.read(new File("test.png"));
         } catch (IOException e) {
         }
 
