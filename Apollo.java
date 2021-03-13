@@ -1,70 +1,125 @@
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
+
 import javax.imageio.*;
 import javax.swing.plaf.ColorUIResource;
 
 public class Apollo {
 
     public static void main(String[] args) throws IOException {
-        encryptText("Hello World!");
-    }
-
-    private static BufferedImage loadImage(String path) {
-        BufferedImage image = null;
-
-        try {
-            image = ImageIO.read(new File(path));
-
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    int clr = image.getRGB(x, y);
-                    int red = (clr & 0x00ff0000) >> 16;
-                    int green = (clr & 0x0000ff00) >> 8;
-                    int blue = clr & 0x000000ff;
-
-                    String rgb = Integer.toString(red) + "," + Integer.toString(green) + "," + Integer.toString(blue);
-
-                    System.out.printf("(%-10s),", rgb);
-
-                    // Color Red get cordinates
-                    // if (red == 255) {
-                    //     System.out.println(String.format("Coordinate %d %d", x, y));
-                    // } else {
-                    //     System.out.println("Red Color value = " + red);
-                    //     System.out.println("Green Color value = " + green);
-                    //     System.out.println("Blue Color value = " + blue);
-                    // }
-                }
-
-                System.out.println();
-            }
-
-        }
-
-        catch (IOException e) {
-        }
-
-        return image;
-
+        encryptText("Hello. If you are able to read this then it means you have succesfully cracked our code. So bye!");
     }
     
     public static void encryptText(String text) throws IOException {
-        BufferedImage image = loadImage("test.png");
+        BufferedImage image = ImageIO.read(new File("largest-test.png"));
 
-        for (int i = 0; i < text.getBytes().length; i++) {
-            Byte value = text.getBytes()[i];
+        System.out.println(text.length());
+        byte[] bytes = text.getBytes("UTF-8");
 
-            int y = i / image.getWidth();
-            int x = i % image.getWidth();
+        String binary = String.format("%8s", Integer.toBinaryString(text.length())).replace(" ", "0");
 
-            Color color = new ColorUIResource(value, value, value);
+        for (int i = 0; i < bytes.length; i++) {
+            int asciiValue = bytes[i];
 
-            image.setRGB(x, y, color.getRGB());
+            String binaryValue = Integer.toBinaryString(asciiValue);
+
+            binary += String.format("%8s", binaryValue).replace(" ", "0");
+        }
+
+        System.out.println(binary.substring(binary.length() - 8, binary.length()));
+
+        int x = 0;
+        int y = 0;
+
+        int pairIndex = 0;
+
+        int[] components;
+
+        for (int pixelNumber = 0; pixelNumber < image.getWidth() * image.getHeight(); pixelNumber++) {
+            boolean itIsOver = false;
+            x = pixelNumber % image.getWidth();
+            y = pixelNumber / image.getWidth();
+
+            int clr = image.getRGB(x, y);
+            int red = (clr & 0x00ff0000) >> 16;
+            int green = (clr & 0x0000ff00) >> 8;
+            int blue = clr & 0x000000ff;
+
+            components = new int[] { red, green, blue };
+
+            for (int colorIndex = 0; colorIndex < 3; colorIndex++) {
+
+                String pair = binary.substring(pairIndex, pairIndex + 2);
+
+                int pixelValue = components[colorIndex];
+                String pixelValueString = String.format("%8s", Integer.toBinaryString(pixelValue)).replace(" ", "0");
+                String newPixelValueString = pixelValueString.substring(0, 6);
+                newPixelValueString += pair;
+                int newPixelValue = Integer.parseInt(newPixelValueString, 2);
+
+                components[colorIndex] = newPixelValue;
+
+                System.out.println(pair + ": " + pixelValueString + " became " + newPixelValueString);
+
+                pairIndex += 2;
+
+                if (pairIndex == binary.length()) {
+                    itIsOver = true;
+                    break;
+                }
+            }
+
+            if (itIsOver) {
+                System.out.println(pixelNumber);
+                Color newColor = new ColorUIResource(components[0], components[1], components[2]);
+
+                image.setRGB(x, y, newColor.getRGB());
+                break;
+            }
+            
+            Color newColor = new ColorUIResource(components[0], components[1], components[2]);
+
+            image.setRGB(x, y, newColor.getRGB());
         }
 
         File file = new File("test-result.png");
 
         ImageIO.write(image, "png", file);
     }
+    
+    // private static Color getAverageColor(BufferedImage image, int x, int y) {
+    //     int height = image.getHeight();
+    //     int width = image.getWidth();
+
+    //     int totalRed = 0;
+    //     int totalGreen = 0;
+    //     int totalBlue = 0;
+
+    //     int totalPixels = 0;
+
+    //     for (int row = Math.max(y - 1, 0); row < Math.min(y + 1, height); row++) {
+    //         for (int col = Math.max(x - 1, 0); col < Math.min(x + 1, width); col++) {
+    //             int clr = image.getRGB(col, row);
+    //             totalRed += (clr & 0x00ff0000) >> 16;
+    //             totalGreen += (clr & 0x0000ff00) >> 8;
+    //             totalBlue += clr & 0x000000ff;
+
+    //             totalPixels++;
+    //         }
+    //     }
+
+    //     int averageRed = totalRed / totalPixels;
+    //     int averageGreen = totalGreen / totalPixels;
+    //     int averageBlue = totalBlue / totalPixels;
+
+    //     return new ColorUIResource(averageRed, averageGreen, averageBlue);
+
+    //     int clr = image.getRGB(Math.max(x - 1, 0), y);
+    //     int red = (clr & 0x00ff0000) >> 16;
+    //     int green = (clr & 0x0000ff00) >> 8;
+    //     int blue = clr & 0x000000ff;
+
+    //     return new ColorUIResource(red, green, blue);
+    // }
 }
