@@ -3,6 +3,8 @@ import java.io.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
+import java.awt.image.*;
+import javax.imageio.*;
 
 public class Athena {
 
@@ -12,8 +14,8 @@ public class Athena {
 
     private int panelSideLength = 500;
 
-    public Athena()  {
-    
+    public Athena() {
+
         try {
             s = new Socket("localhost", 6666);
             dos = new DataOutputStream(s.getOutputStream());
@@ -28,29 +30,28 @@ public class Athena {
                         s.close();
                         dis.close();
                         dos.close();
-                    }
-                    catch (Exception event) {
+                    } catch (Exception event) {
                     }
                     System.exit(0);
                 }
             });
-    
+
             GraphicsEnvironment graphics = GraphicsEnvironment.getLocalGraphicsEnvironment();
             GraphicsDevice device = graphics.getDefaultScreenDevice();
-            
+
             // Steps required to display the frame and only the current frame
             clientFrame.setResizable(false);
             clientFrame.setLayout(null);
             device.setFullScreenWindow(clientFrame);
-    
+
             Dimension frameSize = clientFrame.getSize();
-    
+
             int midFrameX = (int) frameSize.getWidth() / 2;
             int midFrameY = (int) frameSize.getHeight() / 2;
-    
+
             JPanel inputPanel = new JPanel();
             inputPanel.setSize(panelSideLength, panelSideLength);
-    
+
             inputPanel.setLocation(midFrameX - (panelSideLength / 2), midFrameY - (panelSideLength / 2));
 
             JLabel usernameLabel = new JLabel("Username:");
@@ -79,13 +80,13 @@ public class Athena {
                         String logInResult = (String) dis.readUTF();
                         String[] detailsArray = logInResult.split(",");
                         if (detailsArray[1].equals("true")) {
-                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Message", JOptionPane.INFORMATION_MESSAGE);
+                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Message",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        } else {
+                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Error",
+                                    JOptionPane.ERROR_MESSAGE);
                         }
-                        else {
-                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                    catch (IOException exception) {
+                    } catch (IOException exception) {
 
                     }
                 }
@@ -101,31 +102,41 @@ public class Athena {
                         String logInResult = (String) dis.readUTF();
                         String[] detailsArray = logInResult.split(",");
                         if (detailsArray[1].equals("true")) {
-                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Account Creation Message", JOptionPane.INFORMATION_MESSAGE);
+                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Account Creation Message",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        } else {
+                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Account Creation Error",
+                                    JOptionPane.ERROR_MESSAGE);
                         }
-                        else {
-                            JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Account Creation Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                    catch (IOException exception) {
+                    } catch (IOException exception) {
 
                     }
                 }
             });
-            
+
             inputPanel.add(logInButton);
             inputPanel.add(createAccountButton);
 
             clientFrame.add(inputPanel);
 
             clientFrame.setVisible(true);
+
+            sendImage(ImageIO.read(new File("test-result.png")));
+
         }
 
         catch (UnknownHostException e) {
             System.out.println("Unknow Host Exception: " + e.getMessage());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
+    }
+    
+    private void sendImage(BufferedImage image) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+        byte[] bytes = baos.toByteArray();
+
+        dos.write(bytes);
     }
 }

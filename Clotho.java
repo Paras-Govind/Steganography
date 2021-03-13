@@ -4,9 +4,11 @@ import java.io.*;
 import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.math.BigInteger;
+import java.awt.image.*;
+import javax.imageio.*;
 
-public class Clotho extends Thread{
-    
+public class Clotho extends Thread {
+
     private final String DATABASE_NAME = "Users.db";
     private final String LOG_IN_FLAG = "0";
     private final String CREATE_NEW_USER_FLAG = "1";
@@ -17,7 +19,6 @@ public class Clotho extends Thread{
     private String username;
     private boolean loggedIn = false;
 
-
     public Clotho(Socket s, DataInputStream dis, DataOutputStream dos) {
 
         this.s = s;
@@ -27,8 +28,14 @@ public class Clotho extends Thread{
 
     @Override
     public void run() {
-    
+
         userLogIn();
+        try {
+            waitForImage();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     private void closeCommunication() throws Exception {
@@ -42,10 +49,10 @@ public class Clotho extends Thread{
 
         while (!loggedIn) {
             try {
-                String logInDetails = (String)dis.readUTF();  
+                String logInDetails = (String) dis.readUTF();
 
                 String[] detailsArray = logInDetails.split(",");
-            
+
                 if (detailsArray[0].equals("end")) {
                     closeCommunication();
                     loggedIn = !loggedIn;
@@ -53,21 +60,17 @@ public class Clotho extends Thread{
 
                 else if (detailsArray.length != 3) {
                     dos.writeUTF("There was an error with the data.,false");
-                }
-                else if (detailsArray[0].equals(LOG_IN_FLAG)) {
+                } else if (detailsArray[0].equals(LOG_IN_FLAG)) {
                     String resultString = logIn(detailsArray[1], detailsArray[2]);
                     dos.writeUTF(resultString + "," + loggedIn);
-                }
-                else if (detailsArray[0].equals(CREATE_NEW_USER_FLAG)) {
+                } else if (detailsArray[0].equals(CREATE_NEW_USER_FLAG)) {
                     String resultString = createUser(detailsArray[1], detailsArray[2]);
                     dos.writeUTF(resultString + "," + loggedIn);
-                }
-                else {
+                } else {
                     dos.writeUTF("There was an error with the data.,false");
                 }
                 dos.flush();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 System.out.println("Exception: " + e.getMessage());
             }
         }
@@ -93,8 +96,7 @@ public class Clotho extends Thread{
 
             conn.close();
             return "That username is already in use.";
-        }
-        else {
+        } else {
             PreparedStatement addUserStatement = conn.prepareStatement("INSERT INTO users VALUES(?,?)");
             addUserStatement.setString(1, username);
             addUserStatement.setString(2, hashPass(password));
@@ -133,14 +135,12 @@ public class Clotho extends Thread{
         if (noOfPasswords == 0) {
 
             return "No account exists with that username.";
-        }
-        else if (retrievedPassword.equals(hashedPassword)) {
+        } else if (retrievedPassword.equals(hashedPassword)) {
 
             loggedIn = true;
             this.username = username;
             return "Successful log in.";
-        }
-        else {
+        } else {
             return "Incorrect Password.";
         }
     }
@@ -150,7 +150,7 @@ public class Clotho extends Thread{
 
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] hash = md.digest(password.getBytes(StandardCharsets.UTF_8));
-        BigInteger number  = new BigInteger(1, hash);
+        BigInteger number = new BigInteger(1, hash);
         StringBuilder hexString = new StringBuilder(number.toString(16));
         while (hexString.length() < 32) {
             hexString.insert(0, '0');
@@ -159,4 +159,19 @@ public class Clotho extends Thread{
         return hexString.toString();
     }
     // End of copied code
+
+    private void waitForImage() throws IOException {
+        int available = dis.available();
+        byte[] buff = new byte[available];
+        ByteArrayOutputStream bao = new ByteArrayOutputStream(available);
+        int bytesRead = -1;
+        
+        while ((bytesRead = dis.read(buff, 0, buff.length)) > -1) {
+            bao.write(buff, 0, bytesRead);
+        }
+
+        InputStream is = new ByteArrayInputStream(bao.toByteArray());
+        
+        BufferedImage image = ImageIO.read(is);
+    }
 }
