@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.awt.image.*;
 import javax.imageio.*;
 
+
 public class Clotho extends Thread {
 
     private final String DATABASE_NAME = "Users.db";
@@ -38,11 +39,16 @@ public class Clotho extends Thread {
         }
     }
 
-    private void closeCommunication() throws Exception {
+    private void closeCommunication() {
 
+        try {
         s.close();
         dis.close();
         dos.close();
+        }
+        catch (Exception e) {
+
+        }
     }
 
     private void userLogIn() {
@@ -166,34 +172,113 @@ public class Clotho extends Thread {
         while (true) {
 
             String inputType = (String) dis.readUTF();
-            if (inputType.equals("1")) {
-                waitForImage();
+            String[] inputDetail = inputType.split(",");
+            if (inputDetail[0].equals("1")) {
+                waitForImage(inputDetail[1]);
             }
 
-            else if (inputType.equals("end")) {
+            else if (inputDetail[0].equals("2")) {
+                readMessage(inputDetail[1]);
+            }
+
+            else if (inputDetail[0].equals("end")) {
 
                 closeCommunication();
             }
         }
     }
-    catch (Exception e) {
-        
-    }
+        catch (Exception e) {
+            closeCommunication();
+        }
     }
 
-    private void waitForImage() throws IOException {
+    private void waitForImage(String recipient) throws IOException {
 
-        int available = dis.available();
-        byte[] buff = new byte[available];
-        ByteArrayOutputStream bao = new ByteArrayOutputStream(available);
-        int bytesRead = -1;
+        dos.writeUTF("ready");
+        dos.flush();
     
-        while ((bytesRead = dis.read(buff, 0, buff.length)) > -1) {
-            bao.write(buff, 0, bytesRead);
+        BufferedImage image = ImageIO.read(ImageIO.createImageInputStream(dis));
+
+        if (checkForUser(recipient)) {
+
+            File recipientDirectory = new File("StoredImages\\" + recipient + "\\");
+            File recipientSenderDirectory = new File(recipientDirectory + username + "\\");
+            recipientSenderDirectory.mkdir();
+            File[] unsentPictures = recipientSenderDirectory.listFiles();
+            String pictureName = "picture";
+
+            if (unsentPictures.length < 1000) {
+                pictureName += "0";
+            }
+            if (unsentPictures.length < 100) {
+                pictureName += "0";
+            }
+            if (unsentPictures.length < 10) {
+                pictureName += "0";
+            }
+            pictureName += unsentPictures.length;
+            File storedPicture = new File(recipientSenderDirectory + pictureName + ".png");
+
+            ImageIO.write(image, "png", storedPicture);
+            dos.writeUTF("true,Message has been sent");
+            dos.flush();
+        }
+        else {
+            dos.writeUTF("false,Recipient doesn't exist.");
+            dos.flush();
+        }
+    }
+
+    private boolean checkForUser(String recipient) {
+    
+        boolean foundRecipient = false;
+
+        try {
+
+            Connection conn = DriverManager.getConnection("jdbc:sqlite:" + DATABASE_NAME);
+            PreparedStatement stmnt = conn.prepareStatement("SELECT * FROM users WHERE username = ?");
+            stmnt.setString(1, recipient);
+
+            ResultSet rs = stmnt.executeQuery();
+            while (rs.next()) {
+                if (rs.getString(1).equals(recipient)) {
+                    foundRecipient = true;
+                }
+            }
+            stmnt.close();
+            conn.close();
         }
 
-        InputStream is = new ByteArrayInputStream(bao.toByteArray());
-    
-        BufferedImage image = ImageIO.read(is);
+        catch (Exception e) {
+
+        }
+
+        return foundRecipient;
+    }
+
+    private void readMessage(String senderName) throws Exception{
+
+        File senderDirectory = new File("StoredImages\\" + username + "\\" + senderName + "\\");
+        if (senderDirectory.exists()) {
+            File[] senderFiles = senderDirectory.listFiles();
+            if (senderFiles != null) {
+                File fileToSend = senderFiles[0];
+                if (fileToSend.exists()) {
+                    
+                }
+                else {
+                    dos.writeUTF("false,User has sent you no new messages.");
+                    dos.flush();                       
+                }
+            }
+            else {
+                dos.writeUTF("false,User has sent you no new messages.");
+                dos.flush();                
+            }
+        }
+        else {
+            dos.writeUTF("false,User has sent you no messages.");
+            dos.flush();
+        }
     }
 }
