@@ -19,6 +19,8 @@ public class Athena {
     private int midFrameX;
     private int midFrameY;
 
+    private JFrame clientFrame;
+
     private int panelSideLength = 500;
 
     public Athena()  {
@@ -28,7 +30,7 @@ public class Athena {
             dos = new DataOutputStream(s.getOutputStream());
             dis = new DataInputStream(s.getInputStream());
 
-            JFrame clientFrame = new JFrame("Athena");
+            clientFrame = new JFrame("Athena");
             WindowAdapter closeWindow = new WindowAdapter() {
 
             public void windowClosing(WindowEvent e) {
@@ -150,6 +152,7 @@ public class Athena {
         menuFrame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 try {
+                    clientFrame.dispose();
                     dos.writeUTF("end");
                     dos.flush();
                     s.close();
@@ -189,7 +192,17 @@ public class Athena {
         quitButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                menuFrame.dispose();
+                try {
+                    clientFrame.dispose();
+                    dos.writeUTF("end");
+                    dos.flush();
+                    s.close();
+                    dis.close();
+                    dos.close();
+                }
+                catch (Exception event) {
+                }
+                System.exit(0);
             }
         });
 
