@@ -189,6 +189,8 @@ public class Clotho extends Thread {
     }
         catch (Exception e) {
             closeCommunication();
+            System.out.println("Closed Thread");
+            System.out.println("Exception:" + e.getMessage());
         }
     }
 
@@ -202,7 +204,8 @@ public class Clotho extends Thread {
         if (checkForUser(recipient)) {
 
             File recipientDirectory = new File("StoredImages\\" + recipient + "\\");
-            File recipientSenderDirectory = new File(recipientDirectory + username + "\\");
+            recipientDirectory.mkdir();
+            File recipientSenderDirectory = new File("StoredImages\\" + recipient + "\\" + username + "\\");
             recipientSenderDirectory.mkdir();
             File[] unsentPictures = recipientSenderDirectory.listFiles();
             String pictureName = "picture";
@@ -217,7 +220,7 @@ public class Clotho extends Thread {
                 pictureName += "0";
             }
             pictureName += unsentPictures.length;
-            File storedPicture = new File(recipientSenderDirectory + pictureName + ".png");
+            File storedPicture = new File("StoredImages\\" + recipient + "\\" + username + "\\" + pictureName + ".png");
 
             ImageIO.write(image, "png", storedPicture);
             dos.writeUTF("true,Message has been sent");
@@ -263,8 +266,15 @@ public class Clotho extends Thread {
             File[] senderFiles = senderDirectory.listFiles();
             if (senderFiles != null) {
                 File fileToSend = senderFiles[0];
-                if (fileToSend.exists()) {
-                    
+                if (fileToSend != null) {
+
+                    BufferedImage pictureToSend = ImageIO.read(fileToSend);
+                    dos.writeUTF("true");
+                    dos.flush();
+                    dis.readUTF();
+                    ImageIO.write(pictureToSend, "png", dos);
+                    dos.flush();
+                    fileToSend.delete();
                 }
                 else {
                     dos.writeUTF("false,User has sent you no new messages.");
