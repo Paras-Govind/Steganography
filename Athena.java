@@ -1,4 +1,5 @@
 import java.net.*;
+import java.time.temporal.TemporalField;
 import java.io.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -277,7 +278,8 @@ public class Athena {
                     }
                     else {
                         encrypter.encryptText(message, sendFilePath);
-                        BufferedImage encryptedPicture = ImageIO.read(new File("temp.png"));
+                        File tempFile = new File("temp.png");
+                        BufferedImage encryptedPicture = ImageIO.read(tempFile);
 
                         dos.writeUTF("1," + reciever);
                         dos.flush();
@@ -294,6 +296,8 @@ public class Athena {
                         else {
                             JOptionPane.showMessageDialog(clientFrame, sendDetails[1], "Send Result", JOptionPane.INFORMATION_MESSAGE);
                         }
+
+                        tempFile.delete();
                     }
                 }
                 catch (IOException exception) {
