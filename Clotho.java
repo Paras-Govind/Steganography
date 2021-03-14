@@ -31,7 +31,7 @@ public class Clotho extends Thread {
 
         userLogIn();
         try {
-            waitForImage();
+            waitForSignal();
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -160,18 +160,40 @@ public class Clotho extends Thread {
     }
     // End of copied code
 
+    private void waitForSignal() throws IOException {
+
+        try {
+        while (true) {
+
+            String inputType = (String) dis.readUTF();
+            if (inputType.equals("1")) {
+                waitForImage();
+            }
+
+            else if (inputType.equals("end")) {
+
+                closeCommunication();
+            }
+        }
+    }
+    catch (Exception e) {
+        
+    }
+    }
+
     private void waitForImage() throws IOException {
+
         int available = dis.available();
         byte[] buff = new byte[available];
         ByteArrayOutputStream bao = new ByteArrayOutputStream(available);
         int bytesRead = -1;
-        
+    
         while ((bytesRead = dis.read(buff, 0, buff.length)) > -1) {
             bao.write(buff, 0, bytesRead);
         }
 
         InputStream is = new ByteArrayInputStream(bao.toByteArray());
-        
+    
         BufferedImage image = ImageIO.read(is);
     }
 }

@@ -236,6 +236,9 @@ public class Athena {
     }
 
     private void sendImage(BufferedImage image) throws IOException {
+
+        dos.writeUTF("1");
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, "png", baos);
         byte[] bytes = baos.toByteArray();
