@@ -52,7 +52,7 @@ public class Athena {
             // Steps required to display the frame and only the current frame
             clientFrame.setResizable(false);
             clientFrame.setLayout(null);
-            device.setFullScreenWindow(clientFrame);
+            clientFrame.setSize(600, 600);
     
             Dimension frameSize = clientFrame.getSize();
     
