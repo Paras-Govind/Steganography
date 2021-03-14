@@ -9,7 +9,7 @@ public class Iris {
         while (true) {
 
             Socket s = ss.accept();
-            DataInputStream dis = new DataInputStream(s.getInputStream());  
+            DataInputStream dis = new DataInputStream(s.getInputStream());
             DataOutputStream dos = new DataOutputStream(s.getOutputStream());
 
             Clotho newThread = new Clotho(s, dis, dos);
