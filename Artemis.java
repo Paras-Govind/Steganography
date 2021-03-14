@@ -1,8 +1,9 @@
 import java.awt.image.*;
 import java.io.*;
 
-public class Artemis {
+import javax.imageio.ImageIO;
 
+public class Artemis {
 
     public String decryptText(BufferedImage image) throws IOException {
 
