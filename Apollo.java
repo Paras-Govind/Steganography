@@ -6,8 +6,89 @@ import javax.imageio.*;
 import javax.swing.plaf.ColorUIResource;
 
 public class Apollo {
+
+    public static void main(String[] args) throws IOException {
+        Apollo ap = new Apollo();
+        ap.encryptText("Hello", "largest-test.png");
+    }
+
+    private String encryptMessage(String text) {
+
+        String characters = "";
+        String keyword = "PARTHENON";
+        String keywordChars = "";
+        String newText = "";
+
+        int index = 0;
+        while(keywordChars.length() != text.length()) {
+            if(index == keyword.length()) {
+                index = 0;
+            }
+            
+            keywordChars += keyword.charAt(index);
+            index++;
+        }
+
+        System.out.println(keywordChars);
+
+        for (int i = 0; i < 256; i++) {
+            characters += (char) i;
+        }
+
+        System.out.println(characters);
+
+        char[][] table = new char[5][5];
+
+        int start = 0;
+
+        table[0][0] = 'X';
+        for (int i = 1; i < table.length; i++) {
+            table[0][i] = characters.charAt(i - 1);
+            table[i][0] = characters.charAt(i - 1);
+        }
+
+        for (int row = 1; row < table.length; row++) {
+            for (int col = 1; col < table.length; col++) {
+                int pos = start + col - 1;
+
+                if (pos >= characters.length()) {
+                    pos = col - 1;
+                }
+
+                table[row][col] = characters.charAt(pos);
+            }
+            start++;
+        }
+
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+
+            int row = 0;
+
+            // find column
+            for (int j = 0; j < table.length; j++) {
+                if (table[j][0] == c) {
+                    row = j;
+                    break;
+                }
+            }
+
+            for (int j = 0; j < table.length; j++) {
+                if (table[row][j] == keywordChars.charAt(i)) {
+                    newText += table[0][j];
+                    break;
+                }
+            }
+        }
+
+
+        return newText;
+    }
     
     public void encryptText(String text, String filePath) throws IOException {
+
+        text = encryptMessage(text);
+
         BufferedImage image = ImageIO.read(new File(filePath));
 
         System.out.println(text.length());
@@ -83,39 +164,5 @@ public class Apollo {
 
         ImageIO.write(image, "png", file);
     }
-    
-    // private static Color getAverageColor(BufferedImage image, int x, int y) {
-    //     int height = image.getHeight();
-    //     int width = image.getWidth();
 
-    //     int totalRed = 0;
-    //     int totalGreen = 0;
-    //     int totalBlue = 0;
-
-    //     int totalPixels = 0;
-
-    //     for (int row = Math.max(y - 1, 0); row < Math.min(y + 1, height); row++) {
-    //         for (int col = Math.max(x - 1, 0); col < Math.min(x + 1, width); col++) {
-    //             int clr = image.getRGB(col, row);
-    //             totalRed += (clr & 0x00ff0000) >> 16;
-    //             totalGreen += (clr & 0x0000ff00) >> 8;
-    //             totalBlue += clr & 0x000000ff;
-
-    //             totalPixels++;
-    //         }
-    //     }
-
-    //     int averageRed = totalRed / totalPixels;
-    //     int averageGreen = totalGreen / totalPixels;
-    //     int averageBlue = totalBlue / totalPixels;
-
-    //     return new ColorUIResource(averageRed, averageGreen, averageBlue);
-
-    //     int clr = image.getRGB(Math.max(x - 1, 0), y);
-    //     int red = (clr & 0x00ff0000) >> 16;
-    //     int green = (clr & 0x0000ff00) >> 8;
-    //     int blue = clr & 0x000000ff;
-
-    //     return new ColorUIResource(red, green, blue);
-    // }
 }
