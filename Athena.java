@@ -14,7 +14,6 @@ public class Athena {
     private DataInputStream dis;
     private DataOutputStream dos;
     private Socket s;
-    private GraphicsDevice device;
 
     private int midFrameX;
     private int midFrameY;
@@ -22,6 +21,11 @@ public class Athena {
     private JFrame clientFrame;
 
     private int panelSideLength = 500;
+
+    private String sendFilePath = null;
+
+    private Apollo encrypter = new Apollo();
+    private Artemis decrypter = new Artemis();
 
     public Athena()  {
     
@@ -47,14 +51,11 @@ public class Athena {
             }
         };
             clientFrame.addWindowListener(closeWindow);
-    
-            GraphicsEnvironment graphics = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            device = graphics.getDefaultScreenDevice();
             
             // Steps required to display the frame and only the current frame
             clientFrame.setResizable(false);
             clientFrame.setLayout(null);
-            clientFrame.setSize(600, 600);
+            clientFrame.setSize(1920, 1080);
     
             Dimension frameSize = clientFrame.getSize();
     
@@ -94,6 +95,7 @@ public class Athena {
                         if (detailsArray[1].equals("true")) {
                             JOptionPane.showMessageDialog(clientFrame, detailsArray[0], "Log In Message", JOptionPane.INFORMATION_MESSAGE);
                             clientFrame.removeWindowListener(closeWindow);
+                            clientFrame.dispose();
                             menu();
                         }
                         else {
@@ -167,14 +169,14 @@ public class Athena {
         );
         menuFrame.setLayout(null);
         menuFrame.setResizable(false);
-        device.setFullScreenWindow(menuFrame);
+        menuFrame.setSize(1920, 1080);
 
         JButton sendButton = new JButton("Send Messages");
         sendButton.setBounds(midFrameX - 175, midFrameY - 15, 150, 30);
         sendButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                send(menuFrame);
+                send();
             }
         });
 
@@ -183,12 +185,12 @@ public class Athena {
         readButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                read(menuFrame);
+                read();
             }
         });
 
         JButton quitButton = new JButton("Quit");
-        quitButton.setBounds(midFrameX - 25, midFrameY + 30, 50, 20);
+        quitButton.setBounds(midFrameX - 50, midFrameY + 30, 100, 20);
         quitButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
@@ -213,16 +215,27 @@ public class Athena {
         menuFrame.setVisible(true);
     }
 
-    private void send(JFrame previousMenu) {
+    private void send() {
 
         JFrame sendFrame = new JFrame("Send");
         sendFrame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
 
-                device.setFullScreenWindow(previousMenu);
+                sendFilePath = null;
                 sendFrame.dispose();
             }
         });
+    
+        sendFrame.setLayout(new GridLayout(3, 2));
+
+        JLabel imageLabel = new JLabel();
+        sendFrame.add(imageLabel);
+
+        JTextField recipient = new JTextField(6);
+        sendFrame.add(recipient);
+
+        JTextField secretMessage = new JTextField(6);
+        sendFrame.add(secretMessage);
 
         JButton openImageButton = new JButton("Open");
         openImageButton.addActionListener(new ActionListener() {
@@ -232,30 +245,125 @@ public class Athena {
                 fileChooser.setAcceptAllFileFilterUsed(false);
                 fileChooser.setDialogTitle("Select a .png file");
                 FileNameExtensionFilter pngRestrict = new FileNameExtensionFilter("Only .png files", "png");
+                fileChooser.addChoosableFileFilter(pngRestrict);
+
+                int choiceMade = fileChooser.showOpenDialog(null);
+
+                if (choiceMade == JFileChooser.APPROVE_OPTION) {
+
+                    sendFilePath = fileChooser.getSelectedFile().getAbsolutePath();
+                    ImageIcon previewIcon = new ImageIcon(sendFilePath);
+                    imageLabel.setIcon(previewIcon);
+                    imageLabel.updateUI();
+                }
             }
         });
 
-        sendFrame.setLayout(null);
+        JButton sendButton = new JButton("Send");
+        sendButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e){
+
+                try {
+                    String message = secretMessage.getText();
+                    String reciever = recipient.getText();
+                    if (sendFilePath == null) {
+                        JOptionPane.showMessageDialog(clientFrame, "Please select an image", "Send Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    else if (reciever.equals("")) {
+                        JOptionPane.showMessageDialog(clientFrame, "Please input a recipient", "Send Error", JOptionPane.ERROR_MESSAGE);                    
+                    }
+                    else if (message.equals("")) {
+                        JOptionPane.showMessageDialog(clientFrame, "Please input a message", "Send Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    else {
+                        encrypter.encryptText(message, sendFilePath);
+                        BufferedImage encryptedPicture = ImageIO.read(new File("temp.png"));
+
+                        dos.writeUTF("1," + reciever);
+                        dos.flush();
+                        dis.readUTF();
+                
+                        ImageIO.write(encryptedPicture, "png", dos);
+                        dos.flush();
+                        String sendResult = (String) dis.readUTF();
+                        String[] sendDetails = sendResult.split(",");
+
+                        if (sendDetails[0].equals("false")) {
+                            JOptionPane.showMessageDialog(clientFrame, sendDetails[1], "Send Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(clientFrame, sendDetails[1], "Send Result", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    }
+                }
+                catch (IOException exception) {
+
+                }
+            }
+        });
+
         sendFrame.setResizable(false);
-        device.setFullScreenWindow(sendFrame);
+        sendFrame.setSize(1920, 1080);
 
-
+        sendFrame.add(openImageButton);
+        sendFrame.add(sendButton);
 
         sendFrame.setVisible(true);
     }
 
-    private void read(JFrame previousMenu) {
+    private void read() {
 
-    }
+        JFrame readFrame = new JFrame();
+        readFrame.setSize(1920, 1080);
 
-    private void sendImage(BufferedImage image) throws IOException {
+        readFrame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
 
-        dos.writeUTF("1");
+                readFrame.dispose();
+            }
+        });
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", baos);
-        byte[] bytes = baos.toByteArray();
+        readFrame.setLayout(new GridLayout(3, 1));
 
-        dos.write(bytes);
+        JLabel imageLabel = new JLabel();
+        JTextArea messageArea = new JTextArea();
+        JTextField senderName = new JTextField();
+
+
+        JButton readButton = new JButton("Read");
+        readButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                try {
+
+                
+                    String sender = senderName.getText();
+
+                    if (sender.equals("")) {
+                        JOptionPane.showMessageDialog(readFrame, "Please input who you want to recieve a message from.", "Read Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    else {
+                        dos.writeUTF("2," + sender);
+                        dos.flush();
+
+                        String readResult = (String) dis.readUTF();
+                        String[] readDetails = readResult.split(",");
+                        if (readDetails[0].equals("true")) {
+
+                        }
+                        else {
+                            JOptionPane.showMessageDialog(readFrame, readDetails[1], "Read Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+                catch (Exception excep) {
+
+                }
+            }
+        });
+
+        readFrame.add(imageLabel);
+        readFrame.add(messageArea);
+        readFrame.add(readButton);
     }
 }

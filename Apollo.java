@@ -6,13 +6,9 @@ import javax.imageio.*;
 import javax.swing.plaf.ColorUIResource;
 
 public class Apollo {
-
-    public static void main(String[] args) throws IOException {
-        encryptText("Hello. If you are able to read this then it means you have succesfully cracked our code. So bye!");
-    }
     
-    public static void encryptText(String text) throws IOException {
-        BufferedImage image = ImageIO.read(new File("largest-test.png"));
+    public void encryptText(String text, String filePath) throws IOException {
+        BufferedImage image = ImageIO.read(new File(filePath));
 
         System.out.println(text.length());
         byte[] bytes = text.getBytes("UTF-8");
@@ -83,7 +79,7 @@ public class Apollo {
             image.setRGB(x, y, newColor.getRGB());
         }
 
-        File file = new File("test-result.png");
+        File file = new File("temp.png");
 
         ImageIO.write(image, "png", file);
     }
