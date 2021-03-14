@@ -323,7 +323,7 @@ public class Athena {
             }
         });
 
-        readFrame.setLayout(new GridLayout(3, 1));
+        readFrame.setLayout(new GridLayout(2, 2));
 
         JLabel imageLabel = new JLabel();
         JTextArea messageArea = new JTextArea();
@@ -349,7 +349,14 @@ public class Athena {
                         String readResult = (String) dis.readUTF();
                         String[] readDetails = readResult.split(",");
                         if (readDetails[0].equals("true")) {
-
+                            dos.writeUTF("ready");
+                            dos.flush();
+                            BufferedImage encryptedImage = ImageIO.read(ImageIO.createImageInputStream(dis));
+                            imageLabel.setIcon(new ImageIcon(encryptedImage));
+                            imageLabel.updateUI();
+                            String message = decrypter.decryptText(encryptedImage);
+                            messageArea.setText(message);
+                            messageArea.updateUI();
                         }
                         else {
                             JOptionPane.showMessageDialog(readFrame, readDetails[1], "Read Error", JOptionPane.ERROR_MESSAGE);
@@ -364,6 +371,9 @@ public class Athena {
 
         readFrame.add(imageLabel);
         readFrame.add(messageArea);
+        readFrame.add(senderName);
         readFrame.add(readButton);
+
+        readFrame.setVisible(true);
     }
 }

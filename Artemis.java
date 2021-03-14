@@ -1,16 +1,10 @@
 import java.awt.image.*;
 import java.io.*;
 
-import javax.imageio.*;
-
 public class Artemis {
 
-    public static void main(String[] args) throws IOException {
-        decryptText();
-    }
 
-    public static void decryptText() throws IOException {
-        BufferedImage image = ImageIO.read(new File("test-result.png"));
+    public String decryptText(BufferedImage image) throws IOException {
 
         String binary = "";
         String message = "";
@@ -80,6 +74,6 @@ public class Artemis {
         // 00101010 for *
         // 00100001 for !
 
-        System.out.println(message);
+        return message;
     }
 }
