@@ -6,8 +6,9 @@ import javax.imageio.*;
 import javax.swing.plaf.ColorUIResource;
 
 public class Apollo {
-    
+
     public void encryptText(String text, String filePath) throws IOException {
+
         BufferedImage image = ImageIO.read(new File(filePath));
 
         System.out.println(text.length());
@@ -83,39 +84,5 @@ public class Apollo {
 
         ImageIO.write(image, "png", file);
     }
-    
-    // private static Color getAverageColor(BufferedImage image, int x, int y) {
-    //     int height = image.getHeight();
-    //     int width = image.getWidth();
 
-    //     int totalRed = 0;
-    //     int totalGreen = 0;
-    //     int totalBlue = 0;
-
-    //     int totalPixels = 0;
-
-    //     for (int row = Math.max(y - 1, 0); row < Math.min(y + 1, height); row++) {
-    //         for (int col = Math.max(x - 1, 0); col < Math.min(x + 1, width); col++) {
-    //             int clr = image.getRGB(col, row);
-    //             totalRed += (clr & 0x00ff0000) >> 16;
-    //             totalGreen += (clr & 0x0000ff00) >> 8;
-    //             totalBlue += clr & 0x000000ff;
-
-    //             totalPixels++;
-    //         }
-    //     }
-
-    //     int averageRed = totalRed / totalPixels;
-    //     int averageGreen = totalGreen / totalPixels;
-    //     int averageBlue = totalBlue / totalPixels;
-
-    //     return new ColorUIResource(averageRed, averageGreen, averageBlue);
-
-    //     int clr = image.getRGB(Math.max(x - 1, 0), y);
-    //     int red = (clr & 0x00ff0000) >> 16;
-    //     int green = (clr & 0x0000ff00) >> 8;
-    //     int blue = clr & 0x000000ff;
-
-    //     return new ColorUIResource(red, green, blue);
-    // }
 }
